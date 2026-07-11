@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { IncidentReport } from '@/lib/types';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/security';
 
 // Pre-populated active incident reports for demo purposes
 let inMemoryReports: IncidentReport[] = [
@@ -76,6 +77,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden: Request origin is not allowed' }, { status: 403 });
+    }
+
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     if (!checkRateLimit(ip, 10, 60000)) {
       return NextResponse.json(
@@ -87,15 +92,26 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { type, lat, lng, description, photoUrl } = body;
 
-    if (!type || !lat || !lng || !description) {
+    if (!type || lat === undefined || lng === undefined || !description) {
       return NextResponse.json({ error: 'Missing required report fields' }, { status: 400 });
+    }
+
+    const parsedLat = parseFloat(lat);
+    const parsedLng = parseFloat(lng);
+
+    if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
+      return NextResponse.json({ error: 'Invalid latitude coordinates. Must be between -90 and 90.' }, { status: 400 });
+    }
+
+    if (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180) {
+      return NextResponse.json({ error: 'Invalid longitude coordinates. Must be between -180 and 180.' }, { status: 400 });
     }
 
     const newReport: IncidentReport = {
       id: Math.random().toString(36).substring(2, 9),
       type,
-      lat: parseFloat(lat),
-      lng: parseFloat(lng),
+      lat: parsedLat,
+      lng: parsedLng,
       description,
       photoUrl,
       createdAt: new Date().toISOString(),

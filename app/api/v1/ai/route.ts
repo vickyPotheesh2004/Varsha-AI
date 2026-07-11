@@ -2,9 +2,14 @@ import { NextResponse } from 'next/server';
 import { generateAIChoice } from '@/lib/ai-client';
 import { AIActionPlan } from '@/lib/types';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { validateOrigin } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
+    if (!validateOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden: Request origin is not allowed' }, { status: 403 });
+    }
+
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
     if (!checkRateLimit(ip, 5, 60000)) {
       return NextResponse.json(

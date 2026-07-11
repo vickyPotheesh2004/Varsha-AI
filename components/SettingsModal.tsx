@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, Settings, Shield, Server, Key, Database, Check } from 'lucide-react';
 
 interface SettingsModalProps {
@@ -14,6 +14,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [supabaseUrl, setSupabaseUrl] = useState('');
   const [supabaseKey, setSupabaseKey] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -33,10 +34,42 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         onClose();
+        return;
+      }
+
+      if (e.key === 'Tab' && modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements.length === 0) return;
+        const firstElement = focusableElements[0] as HTMLElement;
+        const lastElement = focusableElements[focusableElements.length - 1] as HTMLElement;
+
+        if (e.shiftKey) {
+          if (document.activeElement === firstElement) {
+            lastElement.focus();
+            e.preventDefault();
+          }
+        } else {
+          if (document.activeElement === lastElement) {
+            firstElement.focus();
+            e.preventDefault();
+          }
+        }
       }
     };
     if (isOpen) {
       window.addEventListener('keydown', handleKeyDown);
+      setTimeout(() => {
+        if (modalRef.current) {
+          const focusable = modalRef.current.querySelectorAll('button, input, select');
+          if (focusable.length > 1) {
+            (focusable[1] as HTMLElement).focus();
+          } else if (focusable.length > 0) {
+            (focusable[0] as HTMLElement).focus();
+          }
+        }
+      }, 50);
     }
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
@@ -67,8 +100,10 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div 
+        ref={modalRef}
         className="w-full max-w-lg overflow-hidden rounded-2xl bg-zinc-950 border border-zinc-800 shadow-2xl text-white animate-in fade-in zoom-in-95 duration-200"
         role="dialog"
+        aria-modal="true"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-zinc-900 px-6 py-4">

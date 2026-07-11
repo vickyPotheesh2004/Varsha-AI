@@ -117,6 +117,7 @@ export default function Navbar({ onOpenSettings }: NavbarProps) {
               onClick={toggleTheme}
               className="rounded-lg p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white border border-transparent hover:border-zinc-900 transition-all duration-200"
               title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+              aria-label={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
               {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
             </button>
@@ -126,6 +127,7 @@ export default function Navbar({ onOpenSettings }: NavbarProps) {
               onClick={() => setIsSettingsOpen(true)}
               className="rounded-lg p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white border border-transparent hover:border-zinc-900 transition-all duration-200"
               title="Settings"
+              aria-label="Open developer and AI settings"
             >
               <Settings className="h-4.5 w-4.5" />
             </button>
