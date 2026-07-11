@@ -141,7 +141,9 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
   };
 
   return (
-    <div className="w-full max-w-xl mx-auto bg-zinc-950/70 border border-zinc-900 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl text-white">
+    <div className="w-full max-w-xl mx-auto bg-zinc-900/45 border border-zinc-850/60 rounded-3xl p-6 sm:p-8 backdrop-blur-md shadow-2xl text-white shadow-indigo-500/5 relative overflow-hidden">
+      {/* Top accent glow line */}
+      <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-500 via-indigo-500 to-indigo-600 opacity-90"></div>
       {/* Progress Indicator */}
       <div className="flex justify-between items-center mb-8">
         <span className="text-xs text-zinc-500 font-semibold tracking-wider uppercase">Step {step} of 3</span>
