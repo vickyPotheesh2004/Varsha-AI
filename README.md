@@ -58,23 +58,54 @@ VarshaAI is an AI-powered disaster preparedness, safety coordination, and decisi
 
 ---
 
-## ⚙️ Configuration (.env.local)
+## ⚙️ Local Installation & Running Guide
 
-Create a `.env.local` file in the root directory:
+Follow these steps to set up and run the project locally on your machine:
 
-```env
-# OpenRouter API Key (Recommended gateway for Gemma/Nemotron models)
-OPENROUTER_API_KEY="your-openrouter-key"
+1. **Clone the Repository:**
+   ```bash
+   git clone https://github.com/vickyPotheesh2004/Varsha-AI.git
+   cd Varsha-AI
+   ```
 
-# Google Gemini API Key (Direct API alternative)
-GEMINI_API_KEY="your-gemini-key"
+2. **Install Dependencies:**
+   ```bash
+   npm install
+   ```
 
-# Supabase Credentials (optional, falls back to localStorage automatically)
-SUPABASE_URL="https://your-project.supabase.co"
-SUPABASE_ANON_KEY="your-anon-key"
-```
+3. **Configure Environment Variables:**
+   Create a `.env.local` file in the root directory:
+   ```env
+   # API Keys (Provide at least one API key for AI safety checklists)
+   OPENROUTER_API_KEY="your-openrouter-key"
+   GEMINI_API_KEY="your-gemini-key"
 
-To initialize the Supabase schema, run this inside the SQL Editor:
+   # Supabase Credentials (optional, falls back to browser localStorage if omitted)
+   SUPABASE_URL="https://your-project.supabase.co"
+   SUPABASE_ANON_KEY="your-anon-key"
+   ```
+
+4. **Run the Development Server:**
+   ```bash
+   npm run dev
+   ```
+   Open [http://localhost:3000](http://localhost:3000) in your browser to view the application.
+
+5. **Build for Production Compile:**
+   ```bash
+   npm run build
+   ```
+
+6. **Run the Automated Tests:**
+   ```bash
+   npm run test
+   ```
+
+---
+
+## 🗄️ Supabase Database Schema
+
+To initialize the database schema, run the following SQL statement inside your Supabase SQL Editor:
 ```sql
 create table reports (
   id text primary key,
