@@ -41,10 +41,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white flex flex-col font-sans relative overflow-hidden">
-      {/* Background radial glowing gradients */}
-      <div className="absolute top-[-25%] left-[-15%] w-[600px] h-[600px] bg-blue-500/8 rounded-full blur-[140px] pointer-events-none z-0"></div>
-      <div className="absolute bottom-[-20%] right-[-15%] w-[700px] h-[700px] bg-indigo-500/8 rounded-full blur-[160px] pointer-events-none z-0"></div>
+    <div className="min-h-screen bg-zinc-950 text-white flex flex-col font-sans relative">
+      {/* Confined background glowing gradients */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-25%] left-[-15%] w-[600px] h-[600px] bg-blue-500/8 rounded-full blur-[140px]"></div>
+        <div className="absolute bottom-[-20%] right-[-15%] w-[700px] h-[700px] bg-indigo-500/8 rounded-full blur-[160px]"></div>
+      </div>
       
       <div className="relative z-10 flex flex-col min-h-screen">
         <Navbar />
