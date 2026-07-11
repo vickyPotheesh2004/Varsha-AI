@@ -61,7 +61,7 @@ export function verifyAndIncrement(
           }
         }
       }
-    } catch (e) {
+    } catch {
       // Reset on tampering or invalid formats
     }
   }

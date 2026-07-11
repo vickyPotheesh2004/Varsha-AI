@@ -101,7 +101,7 @@ async function callOpenRouter(systemPrompt: string, userPrompt: string, apiKey: 
 async function callGemini(systemPrompt: string, userPrompt: string, apiKey: string): Promise<string> {
   // We try gemini-2.5-flash as default, then fallback to gemini-1.5-flash
   const models = ['gemini-2.5-flash', 'gemini-1.5-flash'];
-  let lastError: any = null;
+  let lastError: unknown = null;
 
   for (const model of models) {
     try {

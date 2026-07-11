@@ -54,7 +54,7 @@ export async function POST(request: Request) {
         const uniqueFileName = `${Date.now()}-${fileName.replace(/[^a-zA-Z0-9.]/g, '_')}`;
         
         // Upload to Supabase Storage bucket 'report-photos'
-        const { data, error } = await supabase.storage
+        const { error } = await supabase.storage
           .from('report-photos')
           .upload(uniqueFileName, buffer, {
             contentType: fileType,
@@ -69,7 +69,7 @@ export async function POST(request: Request) {
           .getPublicUrl(uniqueFileName);
         
         publicUrl = urlData.publicUrl;
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error('Supabase Storage upload failed, falling back to data URI:', err);
         // Fall back to base64 data URI if bucket or permission is misconfigured
         publicUrl = `data:${fileType};base64,${fileData}`;
@@ -85,8 +85,8 @@ export async function POST(request: Request) {
       `varsha-rl-upload=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=60`
     );
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('File upload failed:', error);
-    return NextResponse.json({ error: 'Upload failed', message: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Upload failed', message: (error as Error).message }, { status: 500 });
   }
 }

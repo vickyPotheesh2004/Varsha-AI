@@ -10,10 +10,14 @@
   --color-zinc-800: #cbd5e1;
   --color-zinc-700: #94a3b8;
   --color-zinc-650: #64748b;
+  --color-zinc-660: #64748b;
   --color-zinc-600: #64748b;
   --color-zinc-500: #475569;
   --color-zinc-400: #334155;
   --color-zinc-300: #1e293b;
+  --color-zinc-200: #1e293b;
+  --color-zinc-100: #0f172a;
+  --color-zinc-50: #020617;
   --color-white: #0f172a;
   --color-black: #ffffff;
 }
@@ -32,6 +36,9 @@
   --color-zinc-500: #a1a1aa;
   --color-zinc-400: #d4d4d8;
   --color-zinc-300: #e4e4e7;
+  --color-zinc-200: #e4e4e7;
+  --color-zinc-100: #f4f4f5;
+  --color-zinc-50: #fafafa;
   --color-white: #ffffff;
   --color-black: #000000;
 }
@@ -52,6 +59,9 @@
   --color-zinc-500: var(--color-zinc-500);
   --color-zinc-400: var(--color-zinc-400);
   --color-zinc-300: var(--color-zinc-300);
+  --color-zinc-200: var(--color-zinc-200);
+  --color-zinc-100: var(--color-zinc-100);
+  --color-zinc-50: var(--color-zinc-50);
   --color-white: var(--color-white);
   --color-black: var(--color-black);
 }

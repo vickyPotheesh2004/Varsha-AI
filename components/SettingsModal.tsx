@@ -9,24 +9,38 @@ interface SettingsModalProps {
 }
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
-  const [provider, setProvider] = useState<'openrouter' | 'gemini'>('gemini');
-  const [apiKey, setApiKey] = useState('');
-  const [supabaseUrl, setSupabaseUrl] = useState('');
-  const [supabaseKey, setSupabaseKey] = useState('');
+  const [provider, setProvider] = useState<'openrouter' | 'gemini'>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('varsha_ai_provider') as 'openrouter' | 'gemini') || 'gemini';
+    }
+    return 'gemini';
+  });
+  const [apiKey, setApiKey] = useState(() => 
+    typeof window !== 'undefined' ? localStorage.getItem('varsha_ai_api_key') || '' : ''
+  );
+  const [supabaseUrl, setSupabaseUrl] = useState(() => 
+    typeof window !== 'undefined' ? localStorage.getItem('varsha_ai_supabase_url') || '' : ''
+  );
+  const [supabaseKey, setSupabaseKey] = useState(() => 
+    typeof window !== 'undefined' ? localStorage.getItem('varsha_ai_supabase_key') || '' : ''
+  );
   const [isSaved, setIsSaved] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedProvider = localStorage.getItem('varsha_ai_provider') as 'openrouter' | 'gemini';
-      const savedKey = localStorage.getItem('varsha_ai_api_key');
-      const savedSupaUrl = localStorage.getItem('varsha_ai_supabase_url');
-      const savedSupaKey = localStorage.getItem('varsha_ai_supabase_key');
+    if (isOpen && typeof window !== 'undefined') {
+      const timer = setTimeout(() => {
+        const savedProvider = localStorage.getItem('varsha_ai_provider') as 'openrouter' | 'gemini';
+        const savedKey = localStorage.getItem('varsha_ai_api_key');
+        const savedSupaUrl = localStorage.getItem('varsha_ai_supabase_url');
+        const savedSupaKey = localStorage.getItem('varsha_ai_supabase_key');
 
-      if (savedProvider) setProvider(savedProvider);
-      if (savedKey) setApiKey(savedKey);
-      if (savedSupaUrl) setSupabaseUrl(savedSupaUrl);
-      if (savedSupaKey) setSupabaseKey(savedSupaKey);
+        setProvider(savedProvider || 'gemini');
+        setApiKey(savedKey || '');
+        setSupabaseUrl(savedSupaUrl || '');
+        setSupabaseKey(savedSupaKey || '');
+      }, 0);
+      return () => clearTimeout(timer);
     }
   }, [isOpen]);
 

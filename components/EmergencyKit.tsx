@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { UserProfile } from '@/lib/types';
 import { ClipboardList, Printer, Download, Square, CheckSquare } from 'lucide-react';
 

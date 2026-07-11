@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Bot, User, Send, Loader2, RefreshCw } from 'lucide-react';
+import { Bot, User, Send, Loader2 } from 'lucide-react';
 import { UserProfile, WeatherData, RouteData, IncidentReport, ShelterData } from '@/lib/types';
 
 interface Message {
@@ -117,7 +117,7 @@ export default function AiAssistant({ userProfile, weatherData, routeData, incid
         assistantResponseText = data.answer;
       } else if (data.summary) {
         assistantResponseText = `${data.summary}\n\n**Immediate Actions:**\n` + 
-          data.actions.slice(0, 3).map((a: any) => `- ${a.title}: ${a.description}`).join('\n');
+          data.actions.slice(0, 3).map((a: { title: string; description: string }) => `- ${a.title}: ${a.description}`).join('\n');
       } else if (data.message) {
         assistantResponseText = data.message;
       } else {
@@ -125,7 +125,7 @@ export default function AiAssistant({ userProfile, weatherData, routeData, incid
       }
 
       setMessages(prev => [...prev, { role: 'assistant', content: assistantResponseText }]);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
       setMessages(prev => [...prev, {
         role: 'assistant',

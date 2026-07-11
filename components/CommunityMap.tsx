@@ -5,10 +5,10 @@ import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 're
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { IncidentReport, ShelterData } from '@/lib/types';
-import { AlertOctagon, HelpCircle, Shield, Plus, Loader2 } from 'lucide-react';
+import { Plus, Loader2 } from 'lucide-react';
 
 // Reset Default Leaflet icon paths
-delete (L.Icon.Default.prototype as any)._getIconUrl;
+delete (L.Icon.Default.prototype as unknown as Record<string, unknown>)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
   iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
@@ -43,7 +43,12 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
 }
 
 export default function CommunityMap({ userLat, userLng, shelters, reports, onSubmitReport }: CommunityMapProps) {
-  const [mapTheme, setMapTheme] = useState<'light' | 'dark'>('dark');
+  const [mapTheme, setMapTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+    }
+    return 'dark';
+  });
   const [clickCoords, setClickCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [reportType, setReportType] = useState('flood');
   const [description, setDescription] = useState('');
@@ -94,11 +99,6 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const isDark = document.documentElement.classList.contains('dark');
-      setMapTheme(isDark ? 'dark' : 'light');
-    }
-
     const handleThemeChange = () => {
       const isDark = document.documentElement.classList.contains('dark');
       setMapTheme(isDark ? 'dark' : 'light');
@@ -242,6 +242,7 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
                 </p>
                 <p className="text-xs text-zinc-600 mt-1 leading-relaxed">{report.description}</p>
                 {report.photoUrl && (
+                  /* eslint-disable-next-line @next/next/no-img-element */
                   <img 
                     src={report.photoUrl} 
                     alt="User submitted incident photo" 

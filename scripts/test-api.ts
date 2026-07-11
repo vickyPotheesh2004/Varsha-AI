@@ -22,8 +22,8 @@ async function runTests() {
       await fn();
       console.log(`✅ [PASS] ${name}`);
       passed++;
-    } catch (err: any) {
-      console.error(`❌ [FAIL] ${name}:`, err.message || err);
+    } catch (err: unknown) {
+      console.error(`❌ [FAIL] ${name}:`, (err as Error).message || String(err));
       failed++;
     }
   };
@@ -90,10 +90,10 @@ async function runTests() {
     });
     
     const prevEnv = process.env.NODE_ENV;
-    (process.env as any).NODE_ENV = 'production';
+    (process.env as Record<string, string | undefined>).NODE_ENV = 'production';
     
     const res = await reportPOST(req);
-    (process.env as any).NODE_ENV = prevEnv;
+    (process.env as Record<string, string | undefined>).NODE_ENV = prevEnv;
     
     if (res.status !== 403) {
       throw new Error(`Expected 403 Forbidden, but got ${res.status}`);

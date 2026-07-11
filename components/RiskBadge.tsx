@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ShieldAlert, ChevronDown, ChevronUp, AlertCircle, Info, RefreshCw } from 'lucide-react';
+import { ShieldAlert, ChevronUp, AlertCircle, Info, RefreshCw } from 'lucide-react';
 import { WeatherData, RouteData } from '@/lib/types';
 import { formatTimeAgo } from '@/lib/utils';
 

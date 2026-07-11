@@ -7,7 +7,7 @@ import ActionCards from './ActionCards';
 import TravelAdvisory from './TravelAdvisory';
 import EmergencyKit from './EmergencyKit';
 import AiAssistant from './AiAssistant';
-import { MapPin, RefreshCw, RefreshCcw, WifiOff, AlertCircle } from 'lucide-react';
+import { MapPin, RefreshCw, RefreshCcw, WifiOff } from 'lucide-react';
 import dynamic from 'next/dynamic';
 
 // Dynamically import Leaflet map component with ssr: false to prevent Next.js build errors
@@ -252,7 +252,9 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
   };
 
   useEffect(() => {
-    loadData();
+    const timer = setTimeout(() => {
+      loadData();
+    }, 0);
 
     // Connection monitoring
     const handleOnline = () => {
@@ -268,9 +270,11 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
     window.addEventListener('offline', handleOffline);
 
     return () => {
+      clearTimeout(timer);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userProfile]);
 
   if (loading) {

@@ -19,7 +19,7 @@ export function formatTimeAgo(isoString: string): string {
     if (diffHours < 24) return `${diffHours}h ago`;
     
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  } catch (e) {
+  } catch {
     return 'Recently';
   }
 }

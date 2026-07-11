@@ -3,8 +3,8 @@
 import React, { useState } from 'react';
 import { ActionItem } from '@/lib/types';
 import { 
-  BatteryCharging, Map, Pill, Umbrella, Phone, ShieldAlert, AlertTriangle, CheckCircle, 
-  ChevronDown, ChevronUp, Check, Square, CheckSquare, Info 
+  BatteryCharging, Map, Pill, Umbrella, Phone, ShieldAlert, AlertTriangle, 
+  Square, CheckSquare 
 } from 'lucide-react';
 
 interface ActionCardsProps {

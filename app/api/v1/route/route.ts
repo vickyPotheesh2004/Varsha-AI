@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       weatherRisk: 'LOW',
       riskReason: 'Route is clear based on static mapping.'
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn('OSRM routing failed, calculating straight-line fallback...', error);
 
     // Straight line distance fallback

@@ -31,7 +31,7 @@ export async function GET(request: Request) {
     }));
 
     // Find max precipitation sum in the next 3 days
-    const nextThreeDaysPrecip = dailyForecast.slice(0, 3).map((d: any) => d.precipitationMax);
+    const nextThreeDaysPrecip = dailyForecast.slice(0, 3).map((d: { precipitationMax: number }) => d.precipitationMax);
     const maxPrecipNextThreeDays = Math.max(...nextThreeDaysPrecip, 0);
 
     // Compute basic weather risk
@@ -63,11 +63,11 @@ export async function GET(request: Request) {
       hourlyTime,
       updatedAt: new Date().toISOString()
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Weather API failed:', error);
     return NextResponse.json({
       error: 'Weather service unavailable',
-      message: error.message,
+      message: (error as Error).message,
       // Default safe weather context
       fallback: {
         currentTemp: 25,

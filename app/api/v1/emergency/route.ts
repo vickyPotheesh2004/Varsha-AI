@@ -59,7 +59,7 @@ export async function GET(request: Request) {
         { dLat: 0.003, dLng: 0.014, name: 'Red Cross Disaster Relief Shelter', type: 'shelter', addr: 'Sports Complex Center' }
       ];
 
-      offsets.forEach((offset, idx) => {
+      offsets.forEach((offset) => {
         const itemLat = lat + offset.dLat;
         const itemLng = lng + offset.dLng;
         nearby.push({
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
     }
 
     return NextResponse.json(nearby.slice(0, 5));
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Emergency shelter API failed:', error);
     return NextResponse.json({ error: 'Shelter search service failed' }, { status: 500 });
   }

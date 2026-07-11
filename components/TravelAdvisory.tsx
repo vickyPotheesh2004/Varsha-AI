@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { RouteData } from '@/lib/types';
-import { Navigation, Clock, AlertTriangle, Check, Loader2, ArrowRight } from 'lucide-react';
+import { Navigation, Clock, AlertTriangle, Loader2, ArrowRight } from 'lucide-react';
 
 interface TravelAdvisoryProps {
   routeData: RouteData | null;

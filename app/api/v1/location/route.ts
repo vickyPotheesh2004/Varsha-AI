@@ -30,7 +30,7 @@ export async function GET(request: Request) {
       if (!res.ok) throw new Error(`Nominatim error: ${res.statusText}`);
       
       const data = await res.json();
-      const results = data.map((item: any) => ({
+      const results = data.map((item: { display_name: string; lat: string; lon: string; type?: string }) => ({
         name: item.display_name,
         lat: parseFloat(item.lat),
         lng: parseFloat(item.lon),
@@ -41,12 +41,12 @@ export async function GET(request: Request) {
     } else {
       return NextResponse.json({ error: 'Missing parameters q or lat/lng' }, { status: 400 });
     }
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Geocoding API failed:', error);
     // Safe fallback defaults
     return NextResponse.json({
       error: 'Geocoding service unavailable',
-      message: error.message,
+      message: (error as Error).message,
       fallback: true
     }, { status: 500 });
   }

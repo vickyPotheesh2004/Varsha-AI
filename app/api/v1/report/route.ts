@@ -35,11 +35,7 @@ let inMemoryReports: IncidentReport[] = [
   }
 ];
 
-export async function GET(request: Request) {
-  const { searchParams } = new URL(request.url);
-  const latStr = searchParams.get('lat');
-  const lngStr = searchParams.get('lng');
-
+export async function GET() {
   try {
     if (supabase) {
       const { data, error } = await supabase
@@ -49,15 +45,31 @@ export async function GET(request: Request) {
 
       if (error) throw error;
       
-      const parsedReports: IncidentReport[] = (data || []).map((item: any) => ({
+      interface SupabaseReportItem {
+        id: string;
+        type: string;
+        latitude?: number;
+        lat?: number;
+        longitude?: number;
+        lng?: number;
+        description: string;
+        photo_url?: string;
+        photoUrl?: string;
+        created_at?: string;
+        createdAt?: string;
+        expires_at?: string;
+        expiresAt?: string;
+      }
+      
+      const parsedReports: IncidentReport[] = ((data as unknown as SupabaseReportItem[]) || []).map((item) => ({
         id: item.id,
-        type: item.type,
-        lat: parseFloat(item.latitude || item.lat),
-        lng: parseFloat(item.longitude || item.lng),
+        type: item.type as 'flood' | 'road-block' | 'tree-fallen' | 'power-cut' | 'medical' | 'other',
+        lat: Number(item.latitude ?? item.lat ?? 0),
+        lng: Number(item.longitude ?? item.lng ?? 0),
         description: item.description,
         photoUrl: item.photo_url || item.photoUrl,
-        createdAt: item.created_at || item.createdAt,
-        expiresAt: item.expires_at || item.expiresAt
+        createdAt: item.created_at || item.createdAt || new Date().toISOString(),
+        expiresAt: item.expires_at || item.expiresAt || new Date().toISOString()
       }));
 
       // Combine with demo reports if user coordinates are close to Mumbai Dadar (to ensure map stays rich)
@@ -69,7 +81,7 @@ export async function GET(request: Request) {
     inMemoryReports = inMemoryReports.filter(r => r.expiresAt > now);
 
     return NextResponse.json(inMemoryReports);
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to fetch incident reports:', error);
     return NextResponse.json(inMemoryReports); // Fallback to memory
   }
@@ -147,8 +159,8 @@ export async function POST(request: Request) {
       `varsha-rl-report=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=60`
     );
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Failed to submit incident report:', error);
-    return NextResponse.json({ error: 'Failed to submit report', message: error.message }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to submit report', message: (error as Error).message }, { status: 500 });
   }
 }

@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { generateAIChoice } from '@/lib/ai-client';
-import { AIActionPlan } from '@/lib/types';
 import { verifyAndIncrement } from '@/lib/rate-limit';
 import { validateOrigin, getCookie } from '@/lib/security';
 
@@ -134,7 +133,7 @@ ${JSON.stringify(shelters, null, 2)}
     }
 
     const rawResponse = await generateAIChoice(systemPrompt, userPrompt, {
-      provider: clientProvider as any,
+      provider: clientProvider as 'openrouter' | 'gemini',
       apiKey: clientApiKey
     });
 
@@ -152,10 +151,10 @@ ${JSON.stringify(shelters, null, 2)}
     cleanedResponse = cleanedResponse.trim();
 
     // Verify it is valid JSON
-    let parsedJson: any;
+    let parsedJson: unknown;
     try {
       parsedJson = JSON.parse(cleanedResponse);
-    } catch (parseError) {
+    } catch {
       console.error('Failed to parse AI JSON response. Raw output was:', rawResponse);
       throw new Error('AI returned malformed JSON content.');
     }
@@ -166,11 +165,11 @@ ${JSON.stringify(shelters, null, 2)}
       `varsha-rl-ai=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=60`
     );
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('AI Action Plan generation failed:', error);
     return NextResponse.json({
       error: 'AI Engine failed',
-      message: error.message || 'Unknown error occurred'
+      message: (error as Error).message || 'Unknown error occurred'
     }, { status: 500 });
   }
 }

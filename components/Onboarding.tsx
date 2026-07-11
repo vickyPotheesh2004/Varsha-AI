@@ -8,14 +8,20 @@ interface OnboardingProps {
   onComplete: (profile: UserProfile) => void;
 }
 
+interface LocationResult {
+  name: string;
+  lat: number;
+  lng: number;
+}
+
 export default function Onboarding({ onComplete }: OnboardingProps) {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [locationQuery, setLocationQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<LocationResult[]>([]);
   
   // Form State
-  const [selectedLocation, setSelectedLocation] = useState<{ name: string; lat: number; lng: number } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<LocationResult | null>(null);
   const [persona, setPersona] = useState<PersonaType>('individual');
   
   // Context state
@@ -58,7 +64,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
             });
             setLocationQuery('Mumbai, Maharashtra (default fallback)');
           }
-        } catch (e) {
+        } catch {
           setSelectedLocation({ name: 'Mumbai, Maharashtra', lat: 19.0760, lng: 72.8777 });
         } finally {
           setLoading(false);
@@ -91,7 +97,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     }
   };
 
-  const handleSelectLocation = (loc: any) => {
+  const handleSelectLocation = (loc: LocationResult) => {
     setSelectedLocation({
       name: loc.name,
       lat: loc.lat,
@@ -352,7 +358,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
                 <label className="block text-xs font-semibold text-zinc-400 mb-1.5">Commute Mode</label>
                 <select
                   value={commuteMode}
-                  onChange={(e) => setCommuteMode(e.target.value as any)}
+                  onChange={(e) => setCommuteMode(e.target.value as 'bike' | 'car' | 'public' | 'walk' | 'none')}
                   className="w-full rounded-xl bg-zinc-900 border border-zinc-850 px-4 py-2.5 text-sm"
                 >
                   <option value="bike">Two-wheeler / Bike</option>

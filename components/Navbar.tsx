@@ -4,42 +4,52 @@ import React, { useState, useEffect } from 'react';
 import { Shield, Wifi, WifiOff, Settings, AlertTriangle, Sun, Moon } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 
-interface NavbarProps {
-  onOpenSettings?: () => void;
-}
-
-export default function Navbar({ onOpenSettings }: NavbarProps) {
+export default function Navbar() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [isOnline, setIsOnline] = useState(true);
-  const [hasApiKey, setHasApiKey] = useState(false);
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
+  
+  const [isOnline, setIsOnline] = useState(() => 
+    typeof navigator !== 'undefined' ? navigator.onLine : true
+  );
+  
+  const [hasApiKey, setHasApiKey] = useState(() => 
+    typeof window !== 'undefined' ? !!localStorage.getItem('varsha_ai_api_key') : false
+  );
+  
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const savedTheme = localStorage.getItem('varsha_theme') as 'light' | 'dark';
+      if (savedTheme) return savedTheme;
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      return prefersDark ? 'dark' : 'light';
+    }
+    return 'dark';
+  });
 
   useEffect(() => {
-    // 1. Monitor network status
-    setIsOnline(navigator.onLine);
+    // 1. Sync theme class to document element
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
+
+  useEffect(() => {
+    // 2. Monitor network status
     const goOnline = () => setIsOnline(true);
     const goOffline = () => setIsOnline(false);
 
     window.addEventListener('online', goOnline);
     window.addEventListener('offline', goOffline);
 
-    // 2. Check if local API Key exists
-    if (typeof window !== 'undefined') {
-      const localKey = localStorage.getItem('varsha_ai_api_key');
-      setHasApiKey(!!localKey);
-
-      // Load Theme settings
-      const savedTheme = localStorage.getItem('varsha_theme') as 'light' | 'dark';
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
-      
-      setTheme(initialTheme);
-      if (initialTheme === 'dark') {
-        document.documentElement.classList.add('dark');
-      } else {
-        document.documentElement.classList.remove('dark');
+    // 3. Keep hasApiKey checked periodically or on mount
+    const checkApiKey = () => {
+      if (typeof window !== 'undefined') {
+        const localKey = localStorage.getItem('varsha_ai_api_key');
+        setHasApiKey(!!localKey);
       }
-    }
+    };
+    checkApiKey();
 
     return () => {
       window.removeEventListener('online', goOnline);
