@@ -20,7 +20,7 @@ interface CommunityMapProps {
   userLng: number;
   shelters: ShelterData[];
   reports: IncidentReport[];
-  onSubmitReport: (type: string, description: string, lat: number, lng: number) => Promise<void>;
+  onSubmitReport: (type: string, description: string, lat: number, lng: number, photoUrl?: string) => Promise<void>;
 }
 
 // Map Controller to fly to coordinates when updated
@@ -47,7 +47,51 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
   const [clickCoords, setClickCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [reportType, setReportType] = useState('flood');
   const [description, setDescription] = useState('');
+  const [photoUrl, setPhotoUrl] = useState('');
+  const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File size exceeds the 2MB limit');
+      return;
+    }
+
+    setUploadingPhoto(true);
+    try {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        const base64Data = (reader.result as string).split(',')[1];
+        
+        const res = await fetch('/api/v1/upload', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            fileName: file.name,
+            fileType: file.type,
+            fileData: base64Data
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setPhotoUrl(data.url);
+        } else {
+          const err = await res.json();
+          alert(`Upload failed: ${err.error || 'Unknown error'}`);
+        }
+      };
+      reader.readAsDataURL(file);
+    } catch (err) {
+      console.error(err);
+      alert('Failed to upload file');
+    } finally {
+      setUploadingPhoto(false);
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -113,6 +157,7 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
   const handleMapClick = (lat: number, lng: number) => {
     setClickCoords({ lat, lng });
     setDescription('');
+    setPhotoUrl('');
   };
 
   const handleReportSubmit = async (e: React.FormEvent) => {
@@ -121,9 +166,10 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
 
     setSubmitting(true);
     try {
-      await onSubmitReport(reportType, description, clickCoords.lat, clickCoords.lng);
+      await onSubmitReport(reportType, description, clickCoords.lat, clickCoords.lng, photoUrl || undefined);
       setClickCoords(null);
       setDescription('');
+      setPhotoUrl('');
     } catch (err) {
       console.error(err);
     } finally {
@@ -195,6 +241,13 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
                    report.type === 'medical' ? '🚨 Medical Emergency' : '⚠️ Alert'}
                 </p>
                 <p className="text-xs text-zinc-600 mt-1 leading-relaxed">{report.description}</p>
+                {report.photoUrl && (
+                  <img 
+                    src={report.photoUrl} 
+                    alt="User submitted incident photo" 
+                    className="w-full h-24 object-cover rounded-lg mt-2 border border-zinc-200" 
+                  />
+                )}
                 <p className="text-[9px] text-zinc-400 mt-2 font-medium">
                   Reported {new Date(report.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                 </p>
@@ -236,6 +289,18 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
                       className="w-full text-xs rounded border border-zinc-300 p-1 h-12"
                       required
                     />
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-semibold text-zinc-500 mb-0.5">Attach Photo (Optional)</label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      disabled={uploadingPhoto}
+                      className="w-full text-[10px] text-zinc-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-[10px] file:font-semibold file:bg-indigo-50 file:text-indigo-600 hover:file:bg-indigo-100"
+                    />
+                    {uploadingPhoto && <p className="text-[9px] text-indigo-500 mt-1 animate-pulse">Uploading...</p>}
+                    {photoUrl && <p className="text-[9px] text-emerald-600 mt-1">✓ Photo attached</p>}
                   </div>
                   <button
                     type="submit"

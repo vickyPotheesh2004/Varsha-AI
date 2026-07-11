@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { generateAIChoice } from '@/lib/ai-client';
 import { AIActionPlan } from '@/lib/types';
-import { checkRateLimit } from '@/lib/rate-limit';
-import { validateOrigin } from '@/lib/security';
+import { verifyAndIncrement } from '@/lib/rate-limit';
+import { validateOrigin, getCookie } from '@/lib/security';
 
 export async function POST(request: Request) {
   try {
@@ -11,7 +11,11 @@ export async function POST(request: Request) {
     }
 
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    if (!checkRateLimit(ip, 5, 60000)) {
+    const currentToken = getCookie(request, 'varsha-rl-ai');
+
+    const { allowed, newToken } = verifyAndIncrement(ip, currentToken, 5, 60000);
+
+    if (!allowed) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please wait a minute before making another AI request.' },
         { status: 429 }
@@ -156,7 +160,12 @@ ${JSON.stringify(shelters, null, 2)}
       throw new Error('AI returned malformed JSON content.');
     }
 
-    return NextResponse.json(parsedJson);
+    const response = NextResponse.json(parsedJson);
+    response.headers.set(
+      'Set-Cookie',
+      `varsha-rl-ai=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=60`
+    );
+    return response;
   } catch (error: any) {
     console.error('AI Action Plan generation failed:', error);
     return NextResponse.json({

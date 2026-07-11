@@ -15,11 +15,10 @@ interface ChecklistItem {
 }
 
 export default function EmergencyKit({ userProfile }: EmergencyKitProps) {
-  const [items, setItems] = useState<ChecklistItem[]>([]);
   const [completed, setCompleted] = useState<string[]>([]);
 
-  useEffect(() => {
-    // Generate items based on persona and profile
+  // Generate items dynamically using useMemo (fully SSR-compatible)
+  const items = React.useMemo(() => {
     const list: ChecklistItem[] = [];
     const p = userProfile.persona;
 
@@ -75,7 +74,7 @@ export default function EmergencyKit({ userProfile }: EmergencyKitProps) {
       list.push({ id: 'a-farm-check', category: 'after', text: 'Audit fields for drainage blockages and report crop damages for insurance coverage.' });
     }
 
-    setItems(list);
+    return list;
   }, [userProfile]);
 
   const toggleItem = (id: string) => {

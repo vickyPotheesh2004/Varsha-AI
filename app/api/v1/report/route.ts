@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { IncidentReport } from '@/lib/types';
-import { checkRateLimit } from '@/lib/rate-limit';
-import { validateOrigin } from '@/lib/security';
+import { verifyAndIncrement } from '@/lib/rate-limit';
+import { validateOrigin, getCookie } from '@/lib/security';
 
 // Pre-populated active incident reports for demo purposes
 let inMemoryReports: IncidentReport[] = [
@@ -82,7 +82,11 @@ export async function POST(request: Request) {
     }
 
     const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
-    if (!checkRateLimit(ip, 10, 60000)) {
+    const currentToken = getCookie(request, 'varsha-rl-report');
+
+    const { allowed, newToken } = verifyAndIncrement(ip, currentToken, 10, 60000);
+
+    if (!allowed) {
       return NextResponse.json(
         { error: 'Rate limit exceeded. Please wait a minute before submitting another report.' },
         { status: 429 }
@@ -137,7 +141,12 @@ export async function POST(request: Request) {
       inMemoryReports.unshift(newReport);
     }
 
-    return NextResponse.json({ success: true, report: newReport });
+    const response = NextResponse.json({ success: true, report: newReport });
+    response.headers.set(
+      'Set-Cookie',
+      `varsha-rl-report=${newToken}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=60`
+    );
+    return response;
   } catch (error: any) {
     console.error('Failed to submit incident report:', error);
     return NextResponse.json({ error: 'Failed to submit report', message: error.message }, { status: 500 });

@@ -45,3 +45,18 @@ export function validateOrigin(request: Request): boolean {
 
   return true;
 }
+
+/**
+ * Parses a cookie value by name from the request's standard Cookie header.
+ * This is serverless-safe and context-agnostic.
+ */
+export function getCookie(request: Request, name: string): string | null {
+  const cookieHeader = request.headers.get('cookie') || '';
+  const cookies = cookieHeader.split(';').map(c => c.trim());
+  for (const cookie of cookies) {
+    if (cookie.startsWith(`${name}=`)) {
+      return cookie.substring(name.length + 1);
+    }
+  }
+  return null;
+}

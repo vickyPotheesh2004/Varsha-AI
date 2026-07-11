@@ -228,12 +228,12 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
   };
 
   // Submit community incident report
-  const handleSubmitReport = async (type: string, description: string, lat: number, lng: number) => {
+  const handleSubmitReport = async (type: string, description: string, lat: number, lng: number, photoUrl?: string) => {
     try {
       const res = await fetch('/api/v1/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type, description, lat, lng })
+        body: JSON.stringify({ type, description, lat, lng, photoUrl })
       });
       if (res.ok) {
         // Refetch reports to sync map markers
