@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Shield, ShieldAlert, Wifi, WifiOff, Settings, AlertTriangle } from 'lucide-react';
+import { Shield, Wifi, WifiOff, Settings, AlertTriangle, Sun, Moon } from 'lucide-react';
 import SettingsModal from './SettingsModal';
 
 interface NavbarProps {
@@ -12,6 +12,7 @@ export default function Navbar({ onOpenSettings }: NavbarProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
     // 1. Monitor network status
@@ -26,6 +27,18 @@ export default function Navbar({ onOpenSettings }: NavbarProps) {
     if (typeof window !== 'undefined') {
       const localKey = localStorage.getItem('varsha_ai_api_key');
       setHasApiKey(!!localKey);
+
+      // Load Theme settings
+      const savedTheme = localStorage.getItem('varsha_theme') as 'light' | 'dark';
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      const initialTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+      
+      setTheme(initialTheme);
+      if (initialTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
     }
 
     return () => {
@@ -34,9 +47,24 @@ export default function Navbar({ onOpenSettings }: NavbarProps) {
     };
   }, []);
 
+  const toggleTheme = () => {
+    const nextTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(nextTheme);
+    localStorage.setItem('varsha_theme', nextTheme);
+
+    if (nextTheme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+
+    // Dispatch custom event to notify Leaflet map component to toggle tile URLs
+    window.dispatchEvent(new Event('themechange'));
+  };
+
   return (
     <>
-      <header className="sticky top-0 z-[100] w-full border-b border-zinc-900 bg-zinc-950/80 backdrop-blur-md px-4 sm:px-6 py-3 text-white">
+      <header className="sticky top-0 z-[100] w-full border-b border-zinc-900 bg-zinc-950/85 backdrop-blur-md px-4 sm:px-6 py-3 text-white transition-colors duration-300">
         <div className="mx-auto flex max-w-7xl items-center justify-between">
           {/* Logo and Tagline */}
           <div className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-3">
@@ -84,10 +112,19 @@ export default function Navbar({ onOpenSettings }: NavbarProps) {
               </div>
             )}
 
+            {/* Theme Toggle */}
+            <button
+              onClick={toggleTheme}
+              className="rounded-lg p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white border border-transparent hover:border-zinc-900 transition-all duration-200"
+              title={theme === 'dark' ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            >
+              {theme === 'dark' ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+            </button>
+
             {/* Settings Trigger */}
             <button
               onClick={() => setIsSettingsOpen(true)}
-              className="rounded-lg p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white border border-transparent hover:border-zinc-800 transition-all duration-200"
+              className="rounded-lg p-2 hover:bg-zinc-900 text-zinc-400 hover:text-white border border-transparent hover:border-zinc-900 transition-all duration-200"
               title="Settings"
             >
               <Settings className="h-4.5 w-4.5" />

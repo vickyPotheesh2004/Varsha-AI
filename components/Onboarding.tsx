@@ -40,7 +40,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     navigator.geolocation.getCurrentPosition(
       async (position) => {
         try {
-          const res = await fetch(`/api/location?lat=${position.coords.latitude}&lng=${position.coords.longitude}`);
+          const res = await fetch(`/api/v1/location?lat=${position.coords.latitude}&lng=${position.coords.longitude}`);
           if (res.ok) {
             const data = await res.json();
             setSelectedLocation({
@@ -79,7 +79,7 @@ export default function Onboarding({ onComplete }: OnboardingProps) {
     
     setLoading(true);
     try {
-      const res = await fetch(`/api/location?q=${encodeURIComponent(locationQuery)}`);
+      const res = await fetch(`/api/v1/location?q=${encodeURIComponent(locationQuery)}`);
       if (res.ok) {
         const data = await res.json();
         setSearchResults(data);

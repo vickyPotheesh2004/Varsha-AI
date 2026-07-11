@@ -46,18 +46,18 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
       const lng = userProfile.longitude;
 
       // 1. Fetch Weather
-      const weatherRes = await fetch(`/api/weather?lat=${lat}&lng=${lng}`);
+      const weatherRes = await fetch(`/api/v1/weather?lat=${lat}&lng=${lng}`);
       const weatherData = await weatherRes.json();
       const resolvedWeather = weatherData.fallback ? weatherData.fallback : weatherData;
       setWeather(resolvedWeather);
 
       // 2. Fetch Shelters
-      const shelterRes = await fetch(`/api/emergency?lat=${lat}&lng=${lng}`);
+      const shelterRes = await fetch(`/api/v1/emergency?lat=${lat}&lng=${lng}`);
       const shelterData = await shelterRes.json();
       setShelters(shelterData);
 
       // 3. Fetch Incident Reports
-      const reportRes = await fetch(`/api/report?lat=${lat}&lng=${lng}`);
+      const reportRes = await fetch(`/api/v1/report?lat=${lat}&lng=${lng}`);
       const reportData = await reportRes.json();
       setReports(reportData);
 
@@ -65,14 +65,14 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
       let resolvedRoute = null;
       if (userProfile.commuteStart && userProfile.commuteEnd) {
         try {
-          const geocodeStartRes = await fetch(`/api/location?q=${encodeURIComponent(userProfile.commuteStart)}`);
-          const geocodeEndRes = await fetch(`/api/location?q=${encodeURIComponent(userProfile.commuteEnd)}`);
+          const geocodeStartRes = await fetch(`/api/v1/location?q=${encodeURIComponent(userProfile.commuteStart)}`);
+          const geocodeEndRes = await fetch(`/api/v1/location?q=${encodeURIComponent(userProfile.commuteEnd)}`);
           if (geocodeStartRes.ok && geocodeEndRes.ok) {
             const startLocs = await geocodeStartRes.json();
             const endLocs = await geocodeEndRes.json();
             if (startLocs[0] && endLocs[0]) {
               const routeRes = await fetch(
-                `/api/route?startLat=${startLocs[0].lat}&startLng=${startLocs[0].lng}&endLat=${endLocs[0].lat}&endLng=${endLocs[0].lng}`
+                `/api/v1/route?startLat=${startLocs[0].lat}&startLng=${startLocs[0].lng}&endLat=${endLocs[0].lat}&endLng=${endLocs[0].lng}`
               );
               if (routeRes.ok) {
                 resolvedRoute = await routeRes.json();
@@ -131,7 +131,7 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
       const provider = localStorage.getItem('varsha_ai_provider') || 'gemini';
       const apiKey = localStorage.getItem('varsha_ai_api_key') || '';
 
-      const res = await fetch('/api/ai', {
+      const res = await fetch('/api/v1/ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -203,8 +203,8 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
   // Callback to calculate OSRM route on demand
   const handleCalculateRoute = async (startAddr: string, endAddr: string) => {
     try {
-      const geocodeStartRes = await fetch(`/api/location?q=${encodeURIComponent(startAddr)}`);
-      const geocodeEndRes = await fetch(`/api/location?q=${encodeURIComponent(endAddr)}`);
+      const geocodeStartRes = await fetch(`/api/v1/location?q=${encodeURIComponent(startAddr)}`);
+      const geocodeEndRes = await fetch(`/api/v1/location?q=${encodeURIComponent(endAddr)}`);
       if (!geocodeStartRes.ok || !geocodeEndRes.ok) return;
 
       const startLocs = await geocodeStartRes.json();
@@ -212,7 +212,7 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
       if (!startLocs[0] || !endLocs[0]) return;
 
       const routeRes = await fetch(
-        `/api/route?startLat=${startLocs[0].lat}&startLng=${startLocs[0].lng}&endLat=${endLocs[0].lat}&endLng=${endLocs[0].lng}`
+        `/api/v1/route?startLat=${startLocs[0].lat}&startLng=${startLocs[0].lng}&endLat=${endLocs[0].lat}&endLng=${endLocs[0].lng}`
       );
       if (routeRes.ok) {
         const routeData = await routeRes.json();
@@ -230,14 +230,14 @@ export default function Dashboard({ userProfile, onReset }: DashboardProps) {
   // Submit community incident report
   const handleSubmitReport = async (type: string, description: string, lat: number, lng: number) => {
     try {
-      const res = await fetch('/api/report', {
+      const res = await fetch('/api/v1/report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type, description, lat, lng })
       });
       if (res.ok) {
         // Refetch reports to sync map markers
-        const reportRes = await fetch(`/api/report?lat=${userProfile.latitude}&lng=${userProfile.longitude}`);
+        const reportRes = await fetch(`/api/v1/report?lat=${userProfile.latitude}&lng=${userProfile.longitude}`);
         const reportData = await reportRes.json();
         setReports(reportData);
         

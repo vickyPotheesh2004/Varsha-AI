@@ -1,8 +1,39 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  
+  --color-zinc-950: #ffffff;
+  --color-zinc-900: #f1f5f9;
+  --color-zinc-850: #e2e8f0;
+  --color-zinc-800: #cbd5e1;
+  --color-zinc-700: #94a3b8;
+  --color-zinc-650: #64748b;
+  --color-zinc-600: #64748b;
+  --color-zinc-500: #475569;
+  --color-zinc-400: #334155;
+  --color-zinc-300: #1e293b;
+  --color-white: #0f172a;
+  --color-black: #ffffff;
+}
+
+:root.dark {
+  --background: #09090b;
+  --foreground: #fafafa;
+  
+  --color-zinc-950: #09090b;
+  --color-zinc-900: #18181b;
+  --color-zinc-850: #202024;
+  --color-zinc-800: #27272a;
+  --color-zinc-700: #3f3f46;
+  --color-zinc-650: #52525b;
+  --color-zinc-600: #71717a;
+  --color-zinc-500: #a1a1aa;
+  --color-zinc-400: #d4d4d8;
+  --color-zinc-300: #e4e4e7;
+  --color-white: #ffffff;
+  --color-black: #000000;
 }
 
 @theme inline {
@@ -10,17 +41,36 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  
+  --color-zinc-950: var(--color-zinc-950);
+  --color-zinc-900: var(--color-zinc-900);
+  --color-zinc-850: var(--color-zinc-850);
+  --color-zinc-800: var(--color-zinc-800);
+  --color-zinc-700: var(--color-zinc-700);
+  --color-zinc-650: var(--color-zinc-650);
+  --color-zinc-660: var(--color-zinc-650);
+  --color-zinc-500: var(--color-zinc-500);
+  --color-zinc-400: var(--color-zinc-400);
+  --color-zinc-300: var(--color-zinc-300);
+  --color-white: var(--color-white);
+  --color-black: var(--color-black);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Custom styles for Leaflet popups in light/dark themes */
+.leaflet-popup-content-wrapper {
+  background-color: var(--color-zinc-950) !important;
+  color: var(--color-foreground) !important;
+  border: 1px solid var(--color-zinc-900);
+  border-radius: 12px !important;
+}
+
+.leaflet-popup-tip {
+  background-color: var(--color-zinc-950) !important;
 }

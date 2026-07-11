@@ -43,10 +43,26 @@ function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number
 }
 
 export default function CommunityMap({ userLat, userLng, shelters, reports, onSubmitReport }: CommunityMapProps) {
+  const [mapTheme, setMapTheme] = useState<'light' | 'dark'>('dark');
   const [clickCoords, setClickCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [reportType, setReportType] = useState('flood');
   const [description, setDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const isDark = document.documentElement.classList.contains('dark');
+      setMapTheme(isDark ? 'dark' : 'light');
+    }
+
+    const handleThemeChange = () => {
+      const isDark = document.documentElement.classList.contains('dark');
+      setMapTheme(isDark ? 'dark' : 'light');
+    };
+
+    window.addEventListener('themechange', handleThemeChange);
+    return () => window.removeEventListener('themechange', handleThemeChange);
+  }, []);
 
   // Custom DivIcons utilizing Tailwind styles
   const createUserIcon = () => L.divIcon({
@@ -126,10 +142,13 @@ export default function CommunityMap({ userLat, userLng, shelters, reports, onSu
         <ChangeView center={[userLat, userLng]} />
         <MapClickHandler onMapClick={handleMapClick} />
         
-        {/* CartoDB Dark Matter Tiles for an premium sleek map aesthetic */}
+        {/* CartoDB tiles matching the active theme */}
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>'
-          url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          url={mapTheme === 'dark'
+            ? "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+            : "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+          }
         />
 
         {/* User Marker */}

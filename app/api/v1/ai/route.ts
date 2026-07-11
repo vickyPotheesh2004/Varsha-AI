@@ -1,9 +1,18 @@
 import { NextResponse } from 'next/server';
 import { generateAIChoice } from '@/lib/ai-client';
 import { AIActionPlan } from '@/lib/types';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    if (!checkRateLimit(ip, 5, 60000)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please wait a minute before making another AI request.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { userProfile, weatherData, routeData, incidents, shelters, question } = body;
 

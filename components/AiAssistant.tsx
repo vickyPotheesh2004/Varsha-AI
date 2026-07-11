@@ -88,7 +88,7 @@ export default function AiAssistant({ userProfile, weatherData, routeData, incid
       const provider = localStorage.getItem('varsha_ai_provider') || 'gemini';
       const apiKey = localStorage.getItem('varsha_ai_api_key') || '';
 
-      const response = await fetch('/api/ai', {
+      const response = await fetch('/api/v1/ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

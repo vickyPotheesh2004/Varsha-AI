@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { IncidentReport } from '@/lib/types';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 // Pre-populated active incident reports for demo purposes
 let inMemoryReports: IncidentReport[] = [
@@ -75,6 +76,14 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get('x-forwarded-for') || '127.0.0.1';
+    if (!checkRateLimit(ip, 10, 60000)) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded. Please wait a minute before submitting another report.' },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const { type, lat, lng, description, photoUrl } = body;
 
