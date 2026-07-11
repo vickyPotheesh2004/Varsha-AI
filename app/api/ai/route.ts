@@ -1,0 +1,153 @@
+import { NextResponse } from 'next/server';
+import { generateAIChoice } from '@/lib/ai-client';
+import { AIActionPlan } from '@/lib/types';
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { userProfile, weatherData, routeData, incidents, shelters, question } = body;
+
+    if (!userProfile || !weatherData) {
+      return NextResponse.json({ error: 'UserProfile and WeatherData are required' }, { status: 400 });
+    }
+
+    // Retrieve custom client-side API keys from request headers if present
+    const clientProvider = request.headers.get('x-provider') || undefined;
+    const clientApiKey = request.headers.get('x-api-key') || undefined;
+
+    let systemPrompt = '';
+    let userPrompt = '';
+
+    if (question) {
+      // Prompt for answering a specific conversational safety question
+      systemPrompt = `You are VarshaAI, an expert Disaster Preparedness & AI Decision Intelligence Coordinator.
+Your role is to answer the user's specific safety question, grounded strictly in their provided weather, commute routes, community incident alerts, and personal household context.
+
+CRITICAL RULES:
+1. You must respond ONLY with a valid JSON object matching this schema:
+   {
+     "answer": "Your detailed, direct, 2-4 sentence conversational response. Be empathetic, practical, and highly specific to their location and persona."
+   }
+2. Do not include any markdown styling like \`\`\`json or pre/post explanations. Return ONLY the raw JSON.
+3. If the data required to answer the question is unavailable, state this clearly in the answer rather than guessing or fabricating details.`;
+
+      userPrompt = `
+User Question: "${question}"
+
+User Profile Context:
+${JSON.stringify(userProfile, null, 2)}
+
+Live Weather Data:
+${JSON.stringify(weatherData, null, 2)}
+
+Commute Route Details (OSRM):
+${routeData ? JSON.stringify(routeData, null, 2) : 'No commute route specified.'}
+
+Active Community Incidents:
+${JSON.stringify(incidents, null, 2)}
+
+Nearest Shelters and Hospitals:
+${JSON.stringify(shelters, null, 2)}
+`;
+    } else {
+      // Prompt for generating the full structured Action Plan
+      systemPrompt = `You are VarshaAI, an expert Disaster Preparedness & AI Decision Intelligence Coordinator.
+Your role is to translate raw weather, commute routes, community incident alerts, and personal household context into a highly personalized, actionable, explainable, and time-prioritized monsoon safety plan.
+
+CRITICAL RULES:
+1. You must respond ONLY with a valid JSON object matching the schema below. Do not include any markdown styling like \`\`\`json or pre/post explanations. Just return raw JSON.
+2. DO NOT fabricate recommendations. Ground every action card on the provided weather details, location, and user context.
+3. Every action item must cite its direct data "evidence" (e.g. "80mm rainfall sum forecast"), its "source" (e.g. "Open-Meteo", "Community Reports"), and a "confidence" percentage between 1 and 100 representing how well the recommendation fits the data.
+4. Recommendations must be tailored to the user's Persona:
+   - 'family': prioritize elderly care, children safety, power backups, and medical supplies.
+   - 'farmer': focus on crop harvesting timelines, livestock shelter, and pesticide schedules.
+   - 'traveller': focus on OSRM commute details, road blocks, flooded roads, and travel windows.
+   - 'senior': prioritize immediate offline contacts, power backups, and accessibility aids.
+   - 'individual': focus on local alerts, general preparedness, and daily commute warnings.
+
+JSON Response Schema:
+{
+  "summary": "A 1-2 sentence plain-language description of the current risk and what to expect.",
+  "riskLevel": "LOW" | "MEDIUM" | "HIGH" | "CRITICAL",
+  "actions": [
+    {
+      "id": "unique-string-id",
+      "title": "Short title of action",
+      "description": "Detailed explanation of what the user should do.",
+      "urgency": "immediate" | "today" | "upcoming",
+      "timeframe": "Specific time window, e.g. 'Within 30 minutes', 'Before 4 PM', 'Tonight'",
+      "icon": "battery-charging" | "map" | "pill" | "umbrella" | "phone" | "shield-alert" (choose best fit),
+      "why": "How this helps the specific persona context.",
+      "evidence": "The specific data point justifying this action (e.g. '50mm rain', 'power cut nearby').",
+      "source": "Where the data came from (e.g. 'Open-Meteo', 'Supabase Reports')",
+      "confidence": 90
+    }
+  ],
+  "avoidList": [
+    "Specific items to avoid, e.g. Dadar Station Road (flooding reported)"
+  ],
+  "timeline": [
+    {
+      "timeframe": "Immediate / Next 30 Mins",
+      "task": "Task description",
+      "priority": "high" | "medium" | "low"
+    }
+  ],
+  "confidenceScore": 85, // Overall confidence score based on data completeness
+  "sourcesUsed": ["Open-Meteo", "Nominatim", "OSRM", "Community Reports"]
+}`;
+
+      userPrompt = `
+User Profile:
+${JSON.stringify(userProfile, null, 2)}
+
+Live Weather Data:
+${JSON.stringify(weatherData, null, 2)}
+
+Commute Route Details (OSRM):
+${routeData ? JSON.stringify(routeData, null, 2) : 'No commute route specified.'}
+
+Active Community Incidents:
+${JSON.stringify(incidents, null, 2)}
+
+Nearest Shelters and Hospitals:
+${JSON.stringify(shelters, null, 2)}
+`;
+    }
+
+    const rawResponse = await generateAIChoice(systemPrompt, userPrompt, {
+      provider: clientProvider as any,
+      apiKey: clientApiKey
+    });
+
+    // Clean up response if the model accidentally wrapped it in code blocks
+    let cleanedResponse = rawResponse.trim();
+    if (cleanedResponse.startsWith('```json')) {
+      cleanedResponse = cleanedResponse.substring(7);
+    }
+    if (cleanedResponse.startsWith('```')) {
+      cleanedResponse = cleanedResponse.substring(3);
+    }
+    if (cleanedResponse.endsWith('```')) {
+      cleanedResponse = cleanedResponse.substring(0, cleanedResponse.length - 3);
+    }
+    cleanedResponse = cleanedResponse.trim();
+
+    // Verify it is valid JSON
+    let parsedJson: any;
+    try {
+      parsedJson = JSON.parse(cleanedResponse);
+    } catch (parseError) {
+      console.error('Failed to parse AI JSON response. Raw output was:', rawResponse);
+      throw new Error('AI returned malformed JSON content.');
+    }
+
+    return NextResponse.json(parsedJson);
+  } catch (error: any) {
+    console.error('AI Action Plan generation failed:', error);
+    return NextResponse.json({
+      error: 'AI Engine failed',
+      message: error.message || 'Unknown error occurred'
+    }, { status: 500 });
+  }
+}
