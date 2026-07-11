@@ -1,13 +1,28 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const weatherParamsSchema = z.object({
+  lat: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().min(-90).max(90)),
+  lng: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().min(-180).max(180))
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const lat = searchParams.get('lat');
-  const lng = searchParams.get('lng');
+  const parseResult = weatherParamsSchema.safeParse({
+    lat: searchParams.get('lat'),
+    lng: searchParams.get('lng')
+  });
 
-  if (!lat || !lng) {
-    return NextResponse.json({ error: 'Latitude and Longitude are required' }, { status: 400 });
+  if (!parseResult.success) {
+    const errorMsg = parseResult.error.issues.map(e => {
+      const path = e.path.join('.');
+      const mappedPath = path === 'lat' ? 'latitude' : path === 'lng' ? 'longitude' : path;
+      return `${mappedPath}: ${e.message}`;
+    }).join(', ');
+    return NextResponse.json({ error: `Invalid coordinates parameters: ${errorMsg}` }, { status: 400 });
   }
+
+  const { lat, lng } = parseResult.data;
 
   try {
     const openmeteoUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,precipitation,wind_speed_10m&hourly=precipitation,temperature_2m&daily=temperature_2m_max,temperature_2m_min,precipitation_sum,wind_speed_10m_max&timezone=auto`;

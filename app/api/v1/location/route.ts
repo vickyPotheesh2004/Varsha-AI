@@ -1,10 +1,39 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const coordRegex = /^-?\d+(\.\d+)?$/;
+const locationParamsSchema = z.object({
+  q: z.string().min(1).max(100).optional().nullable(),
+  lat: z.string().regex(coordRegex).refine(val => {
+    const num = parseFloat(val);
+    return num >= -90 && num <= 90;
+  }).optional().nullable(),
+  lng: z.string().regex(coordRegex).refine(val => {
+    const num = parseFloat(val);
+    return num >= -180 && num <= 180;
+  }).optional().nullable()
+}).refine(data => data.q || (data.lat && data.lng), {
+  message: "Either query 'q' or coordinates 'lat' and 'lng' must be provided."
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const q = searchParams.get('q');
-  const lat = searchParams.get('lat');
-  const lng = searchParams.get('lng');
+  const parseResult = locationParamsSchema.safeParse({
+    q: searchParams.get('q'),
+    lat: searchParams.get('lat'),
+    lng: searchParams.get('lng')
+  });
+
+  if (!parseResult.success) {
+    const errorMsg = parseResult.error.issues.map(e => {
+      const path = e.path.join('.');
+      const mappedPath = path === 'lat' ? 'latitude' : path === 'lng' ? 'longitude' : path;
+      return `${mappedPath}: ${e.message}`;
+    }).join(', ');
+    return NextResponse.json({ error: `Invalid location parameters: ${errorMsg}` }, { status: 400 });
+  }
+
+  const { q, lat, lng } = parseResult.data;
 
   const userAgent = 'VarshaAI/1.0 (contact: support-varshaai@vercel.app)';
   const headers = { 'User-Agent': userAgent };

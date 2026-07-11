@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { validateOrigin, getCookie } from '@/lib/security';
 import { verifyAndIncrement } from '@/lib/rate-limit';
+import { z } from 'zod';
 
 // Allowed MIME types
-const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_MIMES = ['image/jpeg', 'image/png', 'image/webp'] as const;
 // Max file size: 2MB in bytes
 const MAX_SIZE_BYTES = 2 * 1024 * 1024;
+
+const uploadSchema = z.object({
+  fileName: z.string().min(1).max(255),
+  fileType: z.enum(ALLOWED_MIMES),
+  fileData: z.string().min(1)
+});
 
 export async function POST(request: Request) {
   try {
@@ -28,16 +35,16 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { fileName, fileType, fileData } = body; // fileData is base64 string
-
-    if (!fileName || !fileType || !fileData) {
-      return NextResponse.json({ error: 'Missing required file fields' }, { status: 400 });
+    const parseResult = uploadSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues.map(e => {
+        const path = e.path.join('.');
+        const mappedPath = path === 'fileType' ? 'file type' : path;
+        return `${mappedPath}: ${e.message}`;
+      }).join(', ');
+      return NextResponse.json({ error: `Invalid upload parameters: ${errorMsg}` }, { status: 400 });
     }
-
-    // 3. Strict MIME type validation
-    if (!ALLOWED_MIMES.includes(fileType)) {
-      return NextResponse.json({ error: `Invalid file type. Allowed types: ${ALLOWED_MIMES.join(', ')}` }, { status: 400 });
-    }
+    const { fileName, fileType, fileData } = parseResult.data;
 
     // 4. Calculate file size from base64 string length
     const approxSizeBytes = Math.floor((fileData.length * 3) / 4);

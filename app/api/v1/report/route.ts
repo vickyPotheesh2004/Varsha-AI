@@ -3,6 +3,15 @@ import { supabase } from '@/lib/supabase';
 import { IncidentReport } from '@/lib/types';
 import { verifyAndIncrement } from '@/lib/rate-limit';
 import { validateOrigin, getCookie } from '@/lib/security';
+import { z } from 'zod';
+
+const reportSchema = z.object({
+  type: z.enum(['flood', 'road-block', 'tree-fallen', 'power-cut', 'medical', 'other']),
+  lat: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().min(-90).max(90)),
+  lng: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().min(-180).max(180)),
+  description: z.string().min(5).max(500),
+  photoUrl: z.string().optional()
+});
 
 // Pre-populated active incident reports for demo purposes
 let inMemoryReports: IncidentReport[] = [
@@ -106,22 +115,16 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { type, lat, lng, description, photoUrl } = body;
-
-    if (!type || lat === undefined || lng === undefined || !description) {
-      return NextResponse.json({ error: 'Missing required report fields' }, { status: 400 });
+    const parseResult = reportSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues.map(e => {
+        const path = e.path.join('.');
+        const mappedPath = path === 'lat' ? 'latitude' : path === 'lng' ? 'longitude' : path;
+        return `${mappedPath}: ${e.message}`;
+      }).join(', ');
+      return NextResponse.json({ error: `Invalid report parameters: ${errorMsg}` }, { status: 400 });
     }
-
-    const parsedLat = parseFloat(lat);
-    const parsedLng = parseFloat(lng);
-
-    if (isNaN(parsedLat) || parsedLat < -90 || parsedLat > 90) {
-      return NextResponse.json({ error: 'Invalid latitude coordinates. Must be between -90 and 90.' }, { status: 400 });
-    }
-
-    if (isNaN(parsedLng) || parsedLng < -180 || parsedLng > 180) {
-      return NextResponse.json({ error: 'Invalid longitude coordinates. Must be between -180 and 180.' }, { status: 400 });
-    }
+    const { type, lat: parsedLat, lng: parsedLng, description, photoUrl } = parseResult.data;
 
     const newReport: IncidentReport = {
       id: Math.random().toString(36).substring(2, 9),

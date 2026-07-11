@@ -1,15 +1,45 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const coordRegex = /^-?\d+(\.\d+)?$/;
+const routeParamsSchema = z.object({
+  startLat: z.string().regex(coordRegex).refine(val => {
+    const num = parseFloat(val);
+    return num >= -90 && num <= 90;
+  }),
+  startLng: z.string().regex(coordRegex).refine(val => {
+    const num = parseFloat(val);
+    return num >= -180 && num <= 180;
+  }),
+  endLat: z.string().regex(coordRegex).refine(val => {
+    const num = parseFloat(val);
+    return num >= -90 && num <= 90;
+  }),
+  endLng: z.string().regex(coordRegex).refine(val => {
+    const num = parseFloat(val);
+    return num >= -180 && num <= 180;
+  })
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const startLat = searchParams.get('startLat');
-  const startLng = searchParams.get('startLng');
-  const endLat = searchParams.get('endLat');
-  const endLng = searchParams.get('endLng');
+  const parseResult = routeParamsSchema.safeParse({
+    startLat: searchParams.get('startLat'),
+    startLng: searchParams.get('startLng'),
+    endLat: searchParams.get('endLat'),
+    endLng: searchParams.get('endLng')
+  });
 
-  if (!startLat || !startLng || !endLat || !endLng) {
-    return NextResponse.json({ error: 'Start and end coordinates are required' }, { status: 400 });
+  if (!parseResult.success) {
+    const errorMsg = parseResult.error.issues.map(e => {
+      const path = e.path.join('.');
+      const mappedPath = path.toLowerCase().includes('lat') ? 'latitude' : path.toLowerCase().includes('lng') ? 'longitude' : path;
+      return `${mappedPath}: ${e.message}`;
+    }).join(', ');
+    return NextResponse.json({ error: `Invalid coordinates parameters: ${errorMsg}` }, { status: 400 });
   }
+
+  const { startLat, startLng, endLat, endLng } = parseResult.data;
 
   try {
     const osrmUrl = `http://router.project-osrm.org/route/v1/driving/${startLng},${startLat};${endLng},${endLat}?overview=full&geometries=geojson`;

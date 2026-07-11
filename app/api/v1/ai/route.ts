@@ -2,6 +2,40 @@ import { NextResponse } from 'next/server';
 import { generateAIChoice } from '@/lib/ai-client';
 import { verifyAndIncrement } from '@/lib/rate-limit';
 import { validateOrigin, getCookie } from '@/lib/security';
+import { z } from 'zod';
+
+const aiSchema = z.object({
+  userProfile: z.object({
+    persona: z.enum(['individual', 'family', 'farmer', 'traveller', 'senior']),
+    locationName: z.string().min(1),
+    latitude: z.number().min(-90).max(90),
+    longitude: z.number().min(-180).max(180),
+    householdSize: z.number().optional(),
+    hasChildren: z.boolean().optional(),
+    hasElderly: z.boolean().optional(),
+    medicalDependencies: z.array(z.string()).optional(),
+    commuteMode: z.enum(['bike', 'car', 'public', 'walk', 'none']).optional(),
+    commuteStart: z.string().optional(),
+    commuteEnd: z.string().optional(),
+    farmCrop: z.string().optional(),
+    farmLivestock: z.boolean().optional()
+  }),
+  weatherData: z.object({
+    currentTemp: z.number(),
+    currentPrecipitation: z.number(),
+    currentWindSpeed: z.number(),
+    riskLevel: z.enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL']),
+    riskReason: z.string(),
+    dailyForecast: z.array(z.any()),
+    hourlyPrecipitation: z.array(z.number()),
+    hourlyTime: z.array(z.string()),
+    updatedAt: z.string()
+  }),
+  routeData: z.any().optional().nullable(),
+  incidents: z.array(z.any()).optional().default([]),
+  shelters: z.array(z.any()).optional().default([]),
+  question: z.string().optional().nullable()
+});
 
 export async function POST(request: Request) {
   try {
@@ -22,11 +56,12 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { userProfile, weatherData, routeData, incidents, shelters, question } = body;
-
-    if (!userProfile || !weatherData) {
-      return NextResponse.json({ error: 'UserProfile and WeatherData are required' }, { status: 400 });
+    const parseResult = aiSchema.safeParse(body);
+    if (!parseResult.success) {
+      const errorMsg = parseResult.error.issues.map(e => `${e.path.join('.')}: ${e.message}`).join(', ');
+      return NextResponse.json({ error: `Invalid AI input parameters: ${errorMsg}` }, { status: 400 });
     }
+    const { userProfile, weatherData, routeData, incidents, shelters, question } = parseResult.data;
 
     // Retrieve custom client-side API keys from request headers if present
     const clientProvider = request.headers.get('x-provider') || undefined;

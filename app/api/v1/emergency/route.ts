@@ -1,16 +1,28 @@
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+const emergencyParamsSchema = z.object({
+  lat: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().min(-90).max(90)),
+  lng: z.union([z.number(), z.string()]).transform(val => Number(val)).pipe(z.number().min(-180).max(180))
+});
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const latStr = searchParams.get('lat');
-  const lngStr = searchParams.get('lng');
+  const parseResult = emergencyParamsSchema.safeParse({
+    lat: searchParams.get('lat'),
+    lng: searchParams.get('lng')
+  });
 
-  if (!latStr || !lngStr) {
-    return NextResponse.json({ error: 'Latitude and Longitude are required' }, { status: 400 });
+  if (!parseResult.success) {
+    const errorMsg = parseResult.error.issues.map(e => {
+      const path = e.path.join('.');
+      const mappedPath = path === 'lat' ? 'latitude' : path === 'lng' ? 'longitude' : path;
+      return `${mappedPath}: ${e.message}`;
+    }).join(', ');
+    return NextResponse.json({ error: `Invalid coordinates parameters: ${errorMsg}` }, { status: 400 });
   }
 
-  const lat = parseFloat(latStr);
-  const lng = parseFloat(lngStr);
+  const { lat, lng } = parseResult.data;
 
   // High quality predefined shelters for Indian major hubs
   const regionalResources = [
